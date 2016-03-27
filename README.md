@@ -2,4 +2,4 @@
 # Version 0.1
 # Author: fasteagle
 # Date: 27.03.2016
-# Descrition: 		
+# Description: Script for Tesla remote control integration in IP-Symcon 
