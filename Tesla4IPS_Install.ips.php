@@ -270,7 +270,7 @@ if(IPS_GetName($parentID)!=$instanceName){
 	
 	if(IPS_VariableProfileExists($tesla->profileButton)==false){
 		IPS_CreateVariableProfile($tesla->profileButton,1);
-		IPS_SetVariableProfileAssociation($tesla->profileButton, 1, "Start", "", 0x008800);
+		IPS_SetVariableProfileAssociation($tesla->profileButton, 1, "OK", "", 0x008800);
 	}
 
 	
