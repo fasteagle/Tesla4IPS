@@ -13,7 +13,7 @@ class SimpleTeslaAPI {
 
    // !!!!!!!!! Hier Token und vehicle_id von z.B. RemoteS einsetzen !!!!!!!!!
     var $token= "XXXXXXXXXXXXXX";
-    var $vehicleID = "XXXXXXXXXXXXXXXXXXX";
+    var $vehicleID = "XXXXXXXXXXXXXX";
     
     // Namen der anzulegenden VAriablen.
     // Nach der Installation sollten diese nicht mehr verändert werden!
@@ -33,6 +33,8 @@ class SimpleTeslaAPI {
  	  var $varLicht = 'Lichthupe';
 
 	  var $varChargeState="Ladestatus";
+	  var $varChargeTriggerStart="LadenStarten";
+	  var $varChargeTriggerStop="LadenUnterbrechen";
 	  var $varChargeLimit="Ladelimit";
 	  var $varChargeSOC="SOC";
 	  var $varChargePort="Ladeport"; //tbd
@@ -90,7 +92,21 @@ class SimpleTeslaAPI {
 			UpdateIPSvar($this->parentID,$this->varTypicalRange,($charge_state->{'response'}->{'battery_range'}/0.621371),2);
 			UpdateIPSvar($this->parentID,$this->varEstimatedRange,($charge_state->{'response'}->{'est_battery_range'}/0.621371),2);
 			UpdateIPSvar($this->parentID,$this->varIdealRange,($charge_state->{'response'}->{'ideal_battery_range'}/0.621371),2);
-				  	
+			
+
+         UpdateIPSvar($this->parentID,$this->varChargeTriggerStop,1,1);
+			UpdateIPSvar($this->parentID,$this->varChargeTriggerStart,1,1);
+			
+			if($charge_state->{'response'}->{'charging_state'}=="Charging"){
+     			IPS_SetHidden(IPS_GetVariableIDByName($this->varChargeTriggerStop,$this->parentID),false);
+				IPS_SetHidden(IPS_GetVariableIDByName($this->varChargeTriggerStart,$this->parentID),true);
+			}else if($charge_state->{'response'}->{'charging_state'}=="Stopped"){
+     			IPS_SetHidden(IPS_GetVariableIDByName($this->varChargeTriggerStop,$this->parentID),true);
+				IPS_SetHidden(IPS_GetVariableIDByName($this->varChargeTriggerStart,$this->parentID),false);
+			}else if($charge_state->{'response'}->{'charging_state'}=="Complete"){
+     			IPS_SetHidden(IPS_GetVariableIDByName($this->varChargeTriggerStop,$this->parentID),true);
+				IPS_SetHidden(IPS_GetVariableIDByName($this->varChargeTriggerStart,$this->parentID),true);
+			}
 		}
 		
 	//Funktion zum Auslesen der Drive Daten und Schreiben in die Variablen
@@ -254,8 +270,7 @@ if(IPS_GetName($parentID)!=$instanceName){
 	
 	if(IPS_VariableProfileExists($tesla->profileButton)==false){
 		IPS_CreateVariableProfile($tesla->profileButton,1);
-		IPS_SetVariableProfileAssociation($tesla->profileButton, 1, "Los", "", 0x008800);
-
+		IPS_SetVariableProfileAssociation($tesla->profileButton, 1, "Start", "", 0x008800);
 	}
 
 	
@@ -317,9 +332,11 @@ if(IPS_GetName($parentID)!=$instanceName){
    UpdateIPSvar($tesla->parentID,$tesla->varChargePort,1,1);
 	UpdateIPSVarButtonProfil($tesla->varChargePort, $instanceID,$tesla->profileButton,$IPS_SELF);
 
+	//Button zum Starten/Stoppen des Ladens
+	UpdateIPSVarButtonProfil($tesla->varChargeTriggerStop, $instanceID,$tesla->profileButton,$IPS_SELF);
+	UpdateIPSVarButtonProfil($tesla->varChargeTriggerStart, $instanceID,$tesla->profileButton,$IPS_SELF);
 
-
-	
+//ENDE Installationsprozess
 
 }else{
 	$tesla=new SimpleTeslaAPI($parentID);
@@ -329,10 +346,8 @@ if(IPS_GetName($parentID)!=$instanceName){
 		//	$IPS_VARIABLE, $IPS_VALUE);
 		$variableName=IPS_GetName($IPS_VARIABLE);
 		if($variableName==$tesla->varHupe){
-			//$tesla->honk_horn();
-			echo "TODO Hupe";
+			$tesla->honk_horn();
 
-			
 		}else if($variableName==$tesla->varKlimaState){
 		   $idVarKlimaState=GetValueBoolean(IPS_GetVariableIDByName($tesla->varKlimaState,$parentID));
 
@@ -348,16 +363,21 @@ if(IPS_GetName($parentID)!=$instanceName){
 			$tesla->readClimateState2Variable();
 
 		}else if($variableName==$tesla->varLicht){
-			echo "TODO Lichthupe";
-			//	$tesla->flash_lights();
+			$tesla->flash_lights();
 
 
 		}else if($variableName==$tesla->varVerriegelt){
 			echo "TODO Verriegeln on/off";
 
-		}else if($variableName==$tesla->varChargeState){
-			echo "TODO Laden on/off";
+		}else if($variableName==$tesla->varChargeTriggerStop){
+			$tesla->charge_stop();
+			sleep(5);
+			$tesla->readChargeState2Variable();
 
+		}else if($variableName==$tesla->varChargeTriggerStart){
+			$tesla->charge_start();
+			sleep(5);
+			$tesla->readChargeState2Variable();
 		}else if($variableName==$tesla->varChargeLimit){
 			echo "TODO Ladelimit setzen";
 
@@ -381,15 +401,4 @@ if(IPS_GetName($parentID)!=$instanceName){
 
 
 }
-
- 
-
-
-
-
-
-//wenns hupt, hat es funktioniert ;)
-//print_r($tesla->honk_horn());
-// Beispiel Innenraumtemperatur
-//print_r($tesla->set_temps(22,22));
 ?>
