@@ -15,6 +15,7 @@ function FB_getServiceData($fbroot,$descXML,$SCPD,$action)
 	return $service;
 }
 
+
 function FB_getStateVars ($fbroot,$service,$action)
 {
 	$xmlDesc = @simplexml_load_file($fbroot.'/'.$service['SCPDURL']);
@@ -51,6 +52,11 @@ function FB_SoapAction($service,$action,$parameter=null,$user = false,$pass = fa
 	   return false;
 	}
 	return $status;
+}
+function UpdateIPSVarButtonProfil($varName, $parentID,$profileName,$scriptID){
+	$idVar=IPS_GetVariableIDByName($varName,$parentID);
+	IPS_SetVariableCustomProfile($idVar,$profileName);
+	IPS_SetVariableCustomAction($idVar,$scriptID);
 }
 
 function UpdateIPSvar($parent,$ident,$value,$type)

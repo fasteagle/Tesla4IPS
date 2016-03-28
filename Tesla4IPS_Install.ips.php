@@ -12,16 +12,16 @@ class SimpleTeslaAPI {
 
 
    // !!!!!!!!! Hier Token und vehicle_id von z.B. RemoteS einsetzen !!!!!!!!!
-    var $token= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
-    var $vehicleID = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+    var $token= "XXXXXXXXXXXXXX";
+    var $vehicleID = "XXXXXXXXXXXXXXXXXXX";
     
-    // Namen der anzulegenden Variablen.
+    // Namen der anzulegenden VAriablen.
     // Nach der Installation sollten diese nicht mehr verändert werden!
      var $varInnentemperatur = 'Innentemperatur';
 	  var $varAussentemperatur = 'Aussentemperatur';
 	  var $varTempFahrer = 'TempFahrer';
 	  var $varTempBeifahrer = 'TempBeifahrer';
-	  var $varKlimaState = 'KlimaAnlage';  //tbd
+	  var $varKlimaState = 'Klima';
 
 	  var $varName = 'Name';
 	  var $varSchiebedach = 'Schiebedach';
@@ -41,9 +41,14 @@ class SimpleTeslaAPI {
 	  var $varEstimatedRange="RWTypisch";
 	  var $varIdealRange="RWGeschaetzt";
 
+	// Namen für individulle Profile
+	  var $profileKM="TESLAKM";
+	  var $profileButton="TESLATrigger";
 
 
-
+	//Trigger Button Farbe
+	var $colTriggerButton="0x0000FF";
+	
 
 
     //TESLA API Url
@@ -61,6 +66,10 @@ class SimpleTeslaAPI {
 		 	UpdateIPSvar($this->parentID,$this->varAussentemperatur,($climate->{'response'}->{'outside_temp'}),2);
 			UpdateIPSvar($this->parentID,$this->varTempFahrer,($climate->{'response'}->{'driver_temp_setting'}),2);
 		 	UpdateIPSvar($this->parentID,$this->varTempBeifahrer,($climate->{'response'}->{'passenger_temp_setting'}),2);
+			$climateActive=($climate->{'response'}->{'fan_status'}>0);
+			echo "Lüftung ist ".$climateActive;
+			UpdateIPSvar($this->parentID,$this->varKlimaState,$climateActive,0);
+
     }
     
      //Funktion zum Auslesen der Fzg Daten und Schreiben in die Variablen
@@ -236,6 +245,20 @@ if(IPS_GetName($parentID)!=$instanceName){
 	$tesla->readVehicleState2Variable();
 	$tesla->readChargeState2Variable();
 	
+	//Profile anlegen:
+
+	if(IPS_VariableProfileExists($tesla->profileKM)==false){
+		IPS_CreateVariableProfile($tesla->profileKM,2);
+		IPS_SetVariableProfileText($tesla->profileKM,"","KM");
+	}
+	
+	if(IPS_VariableProfileExists($tesla->profileButton)==false){
+		IPS_CreateVariableProfile($tesla->profileButton,1);
+		IPS_SetVariableProfileAssociation($tesla->profileButton, 1, "Los", "", 0x008800);
+
+	}
+
+	
 	//Setzen der Eigenschaften für die einzelnen Variablen:
 	$idVar=IPS_GetVariableIDByName($tesla->varInnentemperatur,$instanceID);
 	IPS_SetVariableCustomProfile($idVar,"~Temperature");
@@ -248,6 +271,12 @@ if(IPS_GetName($parentID)!=$instanceName){
 
 	$idVar=IPS_GetVariableIDByName($tesla->varTempBeifahrer,$instanceID);
 	IPS_SetVariableCustomProfile($idVar,"~Temperature");
+	
+	$idVar=IPS_GetVariableIDByName($tesla->varKlimaState,$instanceID);
+	IPS_SetVariableCustomProfile($idVar,"~Switch");
+	IPS_SetVariableCustomAction($idVar,$IPS_SELF);
+
+
 
    $idVar=IPS_GetVariableIDByName($tesla->varName,$instanceID);
 	IPS_SetVariableCustomProfile($idVar,"~String");
@@ -265,17 +294,32 @@ if(IPS_GetName($parentID)!=$instanceName){
 	IPS_SetVariableCustomProfile($idVar,"~String");
 	
    $idVar=IPS_GetVariableIDByName($tesla->varChargeLimit,$instanceID);
-	IPS_SetVariableCustomProfile($idVar,"~Intensity.100");
+	IPS_SetVariableCustomProfile($idVar,"~Battery.100");
    $idVar=IPS_GetVariableIDByName($tesla->varChargeSOC,$instanceID);
-	IPS_SetVariableCustomProfile($idVar,"~Intensity.100");
+	IPS_SetVariableCustomProfile($idVar,"~Battery.100");
    $idVar=IPS_GetVariableIDByName($tesla->varBatteryHeater,$instanceID);
 	IPS_SetVariableCustomProfile($idVar,"~Switch");
-   $idVar=IPS_GetVariableIDByName($tesla->varTypicalRange,$instanceID);
-	IPS_SetVariableCustomProfile($idVar,""); //TODO: Eigenes KM Profil erstellen
+	
+	$idVar=IPS_GetVariableIDByName($tesla->varTypicalRange,$instanceID);
+	IPS_SetVariableCustomProfile($idVar,$tesla->profileKM); 
    $idVar=IPS_GetVariableIDByName($tesla->varEstimatedRange,$instanceID);
-	IPS_SetVariableCustomProfile($idVar,""); //TODO: Eigenes KM Profil erstellen
+	IPS_SetVariableCustomProfile($idVar,$tesla->profileKM); 
    $idVar=IPS_GetVariableIDByName($tesla->varIdealRange,$instanceID);
-	IPS_SetVariableCustomProfile($idVar,""); //TODO: Eigenes KM Profil erstellen
+	IPS_SetVariableCustomProfile($idVar,$tesla->profileKM); 
+	
+	//Trigger Buttons erstellen
+	UpdateIPSvar($tesla->parentID,$tesla->varHupe,1,1);
+	UpdateIPSVarButtonProfil($tesla->varHupe, $instanceID,$tesla->profileButton,$IPS_SELF);
+   
+   UpdateIPSvar($tesla->parentID,$tesla->varLicht,1,1);
+	UpdateIPSVarButtonProfil($tesla->varLicht, $instanceID,$tesla->profileButton,$IPS_SELF);
+
+   UpdateIPSvar($tesla->parentID,$tesla->varChargePort,1,1);
+	UpdateIPSVarButtonProfil($tesla->varChargePort, $instanceID,$tesla->profileButton,$IPS_SELF);
+
+
+
+	
 
 }else{
 	$tesla=new SimpleTeslaAPI($parentID);
@@ -285,17 +329,28 @@ if(IPS_GetName($parentID)!=$instanceName){
 		//	$IPS_VARIABLE, $IPS_VALUE);
 		$variableName=IPS_GetName($IPS_VARIABLE);
 		if($variableName==$tesla->varHupe){
-			$tesla->honk_horn();
+			//$tesla->honk_horn();
+			echo "TODO Hupe";
+
 			
 		}else if($variableName==$tesla->varKlimaState){
-			echo "TODO Klimaanlage on/off";
-		   //WENN On Dann Aus
-		   
-		   //Wenn Off Dann An
-		   
-		   //Update State
+		   $idVarKlimaState=GetValueBoolean(IPS_GetVariableIDByName($tesla->varKlimaState,$parentID));
+
+			if($idVarKlimaState){
+				$tesla->auto_conditioning_stop();
+				echo "Klima AUS";
+				}
+			else{
+				$tesla->auto_conditioning_start();
+				echo "Klima AN";
+				}
+			sleep(4);
+			$tesla->readClimateState2Variable();
+
 		}else if($variableName==$tesla->varLicht){
 			echo "TODO Lichthupe";
+			//	$tesla->flash_lights();
+
 
 		}else if($variableName==$tesla->varVerriegelt){
 			echo "TODO Verriegeln on/off";
@@ -306,7 +361,13 @@ if(IPS_GetName($parentID)!=$instanceName){
 		}else if($variableName==$tesla->varChargeLimit){
 			echo "TODO Ladelimit setzen";
 
+		}else if($variableName==$tesla->varChargePort){
+			$tesla->charge_port_door_open();
+		
+
 		}
+
+		
 
 		
 	}else{
@@ -320,4 +381,15 @@ if(IPS_GetName($parentID)!=$instanceName){
 
 
 }
+
+ 
+
+
+
+
+
+//wenns hupt, hat es funktioniert ;)
+//print_r($tesla->honk_horn());
+// Beispiel Innenraumtemperatur
+//print_r($tesla->set_temps(22,22));
 ?>
