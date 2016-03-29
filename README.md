@@ -3,6 +3,7 @@
 - Author: fasteagle
 - Date: 29.03.2016
 - Description: Script for Tesla remote control integration in IP-Symcon 
+
 # Erstinstallation:
 1. Zur Verwendung das Standardinclude.php in den Skript Ordner (...\IP-Symcon\Scripts\) von IP-Symcon kopieren.
 2. Das Tesla4IPS_Install Skript in der IP-Symcon Konsole an gewünschter Stelle erstellen und Skripteditor öffnen.
