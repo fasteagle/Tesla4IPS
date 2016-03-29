@@ -6,14 +6,10 @@ $instanceName="Tesla Control"; //Name der Dummy Instanz für das "Gerät" Tesla
 
 
 class SimpleTeslaAPI {
-    // Quick&Dirty Tesla API - Implementierung in PHP zum Nachvollziehen und weiterprogrammieren,
-    // 9.1.2016 (V1.1)
-    // von tachy@tff-forum.de
 
-
-   // !!!!!!!!! Hier Token und vehicle_id von z.B. RemoteS einsetzen !!!!!!!!!
-    var $token= "XXXXXXXXXXXXXX";
-    var $vehicleID = "XXXXXXXXXXXXXX";
+// !!!!!!!!! Hier Token und vehicle_id von z.B. RemoteS einsetzen !!!!!!!!!
+    var $token= "XXX";
+    var $vehicleID = "XXX";
     
     // Namen der anzulegenden VAriablen.
     // Nach der Installation sollten diese nicht mehr verändert werden!
@@ -25,7 +21,10 @@ class SimpleTeslaAPI {
 
 	  var $varName = 'Name';
 	  var $varSchiebedach = 'Schiebedach';
-	  var $varVerriegelt = 'Verriegelt';
+	  var $varVerriegelt = 'Auto';
+  	  var $varVerriegeln = 'Verriegeln';
+	  var $varEntriegeln = 'Entriegeln';
+
 	  var $varVersion = 'Version';
 	  
 	  
@@ -46,10 +45,11 @@ class SimpleTeslaAPI {
 	// Namen für individulle Profile
 	  var $profileKM="TESLAKM";
 	  var $profileButton="TESLATrigger";
+	  var $profileChargeRange="TESLACharge";
 
 
 	//Trigger Button Farbe
-	var $colTriggerButton="0x0000FF";
+	  var $colTriggerButton="0x0000FF";
 	
 
 
@@ -96,7 +96,6 @@ class SimpleTeslaAPI {
 
          UpdateIPSvar($this->parentID,$this->varChargeTriggerStop,1,1);
 			UpdateIPSvar($this->parentID,$this->varChargeTriggerStart,1,1);
-			
 			if($charge_state->{'response'}->{'charging_state'}=="Charging"){
      			IPS_SetHidden(IPS_GetVariableIDByName($this->varChargeTriggerStop,$this->parentID),false);
 				IPS_SetHidden(IPS_GetVariableIDByName($this->varChargeTriggerStart,$this->parentID),true);
@@ -107,6 +106,9 @@ class SimpleTeslaAPI {
      			IPS_SetHidden(IPS_GetVariableIDByName($this->varChargeTriggerStop,$this->parentID),true);
 				IPS_SetHidden(IPS_GetVariableIDByName($this->varChargeTriggerStart,$this->parentID),true);
 			}
+			
+			
+			
 		}
 		
 	//Funktion zum Auslesen der Drive Daten und Schreiben in die Variablen
@@ -150,7 +152,7 @@ class SimpleTeslaAPI {
         $rc=curl_getinfo($ch,CURLINFO_HTTP_CODE);
 
         curl_close($ch);
-			echo "\n".$result;
+    		//echo "\n".$result;
         return json_decode($result);
     }
 
@@ -273,6 +275,17 @@ if(IPS_GetName($parentID)!=$instanceName){
 		IPS_SetVariableProfileAssociation($tesla->profileButton, 1, "OK", "", 0x008800);
 	}
 
+	if(IPS_VariableProfileExists($tesla->profileChargeRange)==false){
+		IPS_CreateVariableProfile($tesla->profileChargeRange,1);
+		IPS_SetVariableProfileValues($tesla->profileChargeRange,50,100,10);
+		IPS_SetVariableProfileAssociation($tesla->profileChargeRange, 50, "50", "", 0x008800);
+		IPS_SetVariableProfileAssociation($tesla->profileChargeRange, 60, "60", "", 0x008800);
+		IPS_SetVariableProfileAssociation($tesla->profileChargeRange, 70, "70", "", 0x008800);
+		IPS_SetVariableProfileAssociation($tesla->profileChargeRange, 80, "80", "", 0x008800);
+		IPS_SetVariableProfileAssociation($tesla->profileChargeRange, 90, "90", "", 0x008800);
+		IPS_SetVariableProfileAssociation($tesla->profileChargeRange, 100, "100", "", 0x008800);
+	}
+
 	
 	//Setzen der Eigenschaften für die einzelnen Variablen:
 	$idVar=IPS_GetVariableIDByName($tesla->varInnentemperatur,$instanceID);
@@ -309,7 +322,9 @@ if(IPS_GetName($parentID)!=$instanceName){
 	IPS_SetVariableCustomProfile($idVar,"~String");
 	
    $idVar=IPS_GetVariableIDByName($tesla->varChargeLimit,$instanceID);
-	IPS_SetVariableCustomProfile($idVar,"~Battery.100");
+	IPS_SetVariableCustomProfile($idVar,$tesla->profileChargeRange);
+	IPS_SetVariableCustomAction($idVar,$IPS_SELF);
+	
    $idVar=IPS_GetVariableIDByName($tesla->varChargeSOC,$instanceID);
 	IPS_SetVariableCustomProfile($idVar,"~Battery.100");
    $idVar=IPS_GetVariableIDByName($tesla->varBatteryHeater,$instanceID);
@@ -332,9 +347,16 @@ if(IPS_GetName($parentID)!=$instanceName){
    UpdateIPSvar($tesla->parentID,$tesla->varChargePort,1,1);
 	UpdateIPSVarButtonProfil($tesla->varChargePort, $instanceID,$tesla->profileButton,$IPS_SELF);
 
+   UpdateIPSvar($tesla->parentID,$tesla->varVerriegeln,1,1);
+	UpdateIPSVarButtonProfil($tesla->varVerriegeln, $instanceID,$tesla->profileButton,$IPS_SELF);
+
+   UpdateIPSvar($tesla->parentID,$tesla->varEntriegeln,1,1);
+	UpdateIPSVarButtonProfil($tesla->varEntriegeln, $instanceID,$tesla->profileButton,$IPS_SELF);
+
 	//Button zum Starten/Stoppen des Ladens
 	UpdateIPSVarButtonProfil($tesla->varChargeTriggerStop, $instanceID,$tesla->profileButton,$IPS_SELF);
 	UpdateIPSVarButtonProfil($tesla->varChargeTriggerStart, $instanceID,$tesla->profileButton,$IPS_SELF);
+	
 
 //ENDE Installationsprozess
 
@@ -353,21 +375,17 @@ if(IPS_GetName($parentID)!=$instanceName){
 
 			if($idVarKlimaState){
 				$tesla->auto_conditioning_stop();
-				echo "Klima AUS";
+				//echo "Klima AUS";
 				}
 			else{
 				$tesla->auto_conditioning_start();
-				echo "Klima AN";
+				//echo "Klima AN";
 				}
 			sleep(4);
 			$tesla->readClimateState2Variable();
 
 		}else if($variableName==$tesla->varLicht){
 			$tesla->flash_lights();
-
-
-		}else if($variableName==$tesla->varVerriegelt){
-			echo "TODO Verriegeln on/off";
 
 		}else if($variableName==$tesla->varChargeTriggerStop){
 			$tesla->charge_stop();
@@ -379,26 +397,28 @@ if(IPS_GetName($parentID)!=$instanceName){
 			sleep(5);
 			$tesla->readChargeState2Variable();
 		}else if($variableName==$tesla->varChargeLimit){
-			echo "TODO Ladelimit setzen";
+		   $tesla->set_charge_limit($_IPS['VALUE']);
+		   sleep(8);
+			$tesla->readChargeState2Variable();
 
 		}else if($variableName==$tesla->varChargePort){
 			$tesla->charge_port_door_open();
 		
 
+		}else if($variableName==$tesla->varVerriegeln){
+			$tesla->door_lock();
+		
+
+
+		}else if($variableName==$tesla->varEntriegeln){
+			$tesla->door_unlock();
+			
 		}
-
-		
-
-		
 	}else{
 		$tesla->readClimateState2Variable();
 		$tesla->readVehicleState2Variable();
 		$tesla->readChargeState2Variable();
 	}
-
-	
-
-
 
 }
 ?>
