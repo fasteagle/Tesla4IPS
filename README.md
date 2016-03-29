@@ -3,10 +3,28 @@
 # Author: fasteagle
 # Date: 29.03.2016
 # Description: Script for Tesla remote control integration in IP-Symcon 
-Zur Verwendung das Standardinclude.php in den Skript Ordner (...\IP-Symcon\Scripts\) von IP-Symcon kopieren.
-Das Tesla4IPS_Install Skript in der IP-Symcon Konsole in den gewünschten Ordner kopieren und im Skripteditor Token und FzgID eintragen. 
-Anschließend das Skript ausführen. 
+# Erstinstallation:
+1. Zur Verwendung das Standardinclude.php in den Skript Ordner (...\IP-Symcon\Scripts\) von IP-Symcon kopieren.
+2. Das Tesla4IPS_Install Skript in der IP-Symcon Konsole an gewünschter Stelle erstellen und Skripteditor öffnen.
+3. Token und FzgID eintragen. (Kann über REMOTE S ermittelt werden: https://tff-forum.de/viewtopic.php?f=58 ... 30#p207620)
+4. Anschließend das Skript ausführen. Es werden alle Variablen und Profile erstellt.
+5. Ein weiteres Ausführen des Skriptes lädt dann erneut alle Variablen .
 
-Im aktuellen Ordner sollte dann eine Tesla-Dummy Instanz erstellt werden unter dieser alle Variablen angelegt sind. 
-Das Skript verschiebt sich dann selbst unterhalb der Instanz. 
-Wenn das Skript jetzt erneut aufgerufen wird,werden nur noch die Werte aktualisiert. 
+# Update Installation:
+Wer das erste Skript schon installiert hat löscht am besten die Tesla Control Instanz und fängt bei Punkt 2) der Erstinstallation an.
+
+#Funktionsumfang:
+- Anzeige der wichtigsten Werte
+- Button zum Starten/Stoppen der Klima
+- Button zum öffnen des Ladeport
+- Button für Hupe
+- Button für Lichthupe
+- Steuerung des Ladelimit
+- Button zum Starten/Stoppen des Ladevorgangs
+- Button zum Entriegeln/Verriegeln
+
+Was noch fehlt:
+- Gliederung in verschiedene Instanzen (Akku, Infos, Klima, Steuerung), aktuell ist alles in einer Liste, was der Übersicht nicht dient.
+- Steuerung des Schiebedachs
+- Google Map Anzeige der aktuellen Position
+- Steuerung zur Einstellung der Innenraum-Temperatur
