@@ -7,7 +7,7 @@
 # Erstinstallation:
 1. Zur Verwendung das Standardinclude.php in den Skript Ordner (...\IP-Symcon\Scripts\) von IP-Symcon kopieren.
 2. Das Tesla4IPS_Install Skript in der IP-Symcon Konsole an gewünschter Stelle erstellen und Skripteditor öffnen.
-3. Token und FzgID eintragen. (Kann über REMOTE S ermittelt werden: https://tff-forum.de/viewtopic.php?f=58 ... 30#p207620)
+3. Token und FzgID eintragen. (Kann über REMOTE S ermittelt werden: https://tff-forum.de/viewtopic.php?f=5830#p207620)
 4. Anschließend das Skript ausführen. Es werden alle Variablen und Profile erstellt.
 5. Ein weiteres Ausführen des Skriptes lädt dann erneut alle Variablen .
 
